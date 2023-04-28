@@ -21,6 +21,7 @@ pub const DistanceResult = struct {
   char: u8,
 };
 
+// This algo is from https://github.com/tsoding/piff/blob/master/piff.py (thanks tsoding)
 pub fn calculate_distance(alloc: std.mem.Allocator, s1: []const u8, s2: []const u8) anyerror![]DistanceResult {
   const m1: usize = s1.len;
   const m2: usize = s2.len;
