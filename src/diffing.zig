@@ -31,15 +31,18 @@ pub const PatchAction = struct {
 
 // This algo is from https://github.com/tsoding/piff/blob/master/piff.py (thanks tsoding)
 pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]const u8) anyerror![]PatchAction {
+  // Get the number of lines for each collection of lines
   const m1: usize = s1.len;
   const m2: usize = s2.len;
 
+  // Init the ArrayLists for storing matrices of distances and actions
   var distances = ArrayList(ArrayList(u16)).init(alloc);
   defer distances.deinit();
   var actions = ArrayList(ArrayList(DiffAction)).init(alloc);
   defer actions.deinit();
 
 
+  // Create the inner rows of the matrices
   var i: usize = 0;
   while (i < m1 + 1): (i += 1) {
     var dist_row = ArrayList(u16).init(alloc);
@@ -50,10 +53,11 @@ pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]co
     try actions.append(act_row);
   }
 
+  // Set the upper left corner to base cases
   distances.items[0].items[0] = 0;
   actions.items[0].items[0] = .ignore;
 
-  {
+  { // Set the first row to all additions
     var n2: u16 = 1;
     while (n2 < m2): (n2 += 1) {
       const n1 = comptime 0;
@@ -62,7 +66,7 @@ pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]co
     }
   }
 
-  {
+  { // Set the first column to all removals
     var n1: u16 = 1;
     while (n1 < m1): (n1 += 1) {
       const n2 = comptime 0;
@@ -71,11 +75,12 @@ pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]co
     }
   }
 
-  {
+  { // Calculate the distances and actions
     var n1: u16 = 1;
     while (n1 < m1): (n1 += 1) {
       var n2: u16 = 1;
       while (n2 < m2): (n2 += 1) {
+        // Lines are the same--ignore
         if (lines_are_equal(s1[n1-1], s2[n2-1])) {
           distances.items[n1].items[n2] = distances.items[n1-1].items[n2-1];
           actions.items[n1].items[n2] = .ignore;
@@ -98,6 +103,7 @@ pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]co
     }
   }
 
+  // Generate the patch
   var patch = ArrayList(PatchAction).init(alloc);
   defer patch.deinit();
   var n1 = m1 - 1;
@@ -179,8 +185,8 @@ test "proper diffing" {
   }
 
   const p = try calculate_distance(alloc, s1.items, s2.items);
+  std.debug.print("Patch[0]: {s}\nPatch[1]: {s}\n", .{ p[0].to_string(alloc), p[1].to_string(alloc) });
   const expect = std.testing.expect;
   try expect(p.len == 2);
   try expect(p[0].action == DiffAction.remove);
-  std.debug.print("Patch[0]: {s}\nPatch[1]: {s}\n", .{ p[0].to_string(alloc), p[1].to_string(alloc) });
 }
