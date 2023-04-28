@@ -1,6 +1,7 @@
 # zeriff - file diffing done in zig
 
-<img style="float: right;"  alt="Zero the Ziguana" src="https://raw.githubusercontent.com/ziglang/logo/master/zero.svg" width="120" />
+<img alt="Zero the Ziguana" src="https://raw.githubusercontent.com/ziglang/logo/master/zero.svg" width="120" align="right" />
+
 This is a project written in [zig](https://ziglang.org) for file diffing--the process of comparing two files to one another
 and calculating the changes in those files.
 Thanks is given to [tsoding/piff](https://github.com/tsoding/piff) for help with the implementation of the modified
