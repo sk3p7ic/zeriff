@@ -1,8 +1,13 @@
 const std = @import("std");
 
+pub const ProgramMode = enum {
+    diff,
+    serve,
+    unset,
+};
+
 pub const ArgumentState = struct {
-    then_exit: bool = false,
-    serve_mode: bool = false,
+    mode: ProgramMode = ProgramMode.unset,
     serve_port: u16 = 5173,
     df_one: []const u8 = "",
     df_two: []const u8 = "",
@@ -25,10 +30,36 @@ pub const ArgumentState = struct {
     }
 };
 
-pub fn parse_args(args: []const []const u8) error{NoArgumentsSupplied}!ArgumentState {
+pub const ArgParseErr = error{
+    NoArgumentsSupplied,
+    NotEnoughArguments,
+    DualModeAttempted,
+};
+
+pub fn print_err(err: ArgParseErr) void {
+    const stderr = std.io.getStdErr();
+    switch (err) {
+        ArgParseErr.NoArgumentsSupplied => {
+            stderr.writeAll("[!] No arguments were supplied.\n\n") catch {};
+            ArgumentState.print_help();
+            std.os.exit(1);
+        },
+        ArgParseErr.NotEnoughArguments => {
+            stderr.writeAll("[!] Not enough arguments were supplied.\n\n") catch {};
+            ArgumentState.print_help();
+            std.os.exit(1);
+        },
+        ArgParseErr.DualModeAttempted => {
+            stderr.writeAll("[!] Two modes were attempted to be used. This is illegal!\n\n") catch {};
+            ArgumentState.print_help();
+            std.os.exit(1);
+        }
+    }
+}
+
+pub fn parse_args(args: []const []const u8) ArgParseErr!ArgumentState {
     if (args.len == 1) {
-        ArgumentState.print_help();
-        return ArgumentState{ .then_exit = true };
+        return ArgParseErr.NoArgumentsSupplied;
     }
 
     const s_cmp = std.mem.eql;
@@ -44,20 +75,30 @@ pub fn parse_args(args: []const []const u8) error{NoArgumentsSupplied}!ArgumentS
         const arg: []const u8 = args[i];
         if (s_cmp(u8, arg, "-h") or s_cmp(u8, arg, "--help")) {
             ArgumentState.print_help();
-            state.then_exit = true;
+            return ArgumentState{};
         } else if (s_cmp(u8, arg, "diff")) {
             if (i + 1 == args.len or i + 2 == args.len) {
-                std.io.getStdErr().writeAll("[!] Error! Not enough arguments supplied!\n") catch {};
-                ArgumentState.print_help();
-                state.then_exit = true;
-                std.os.exit(1);
+                return ArgParseErr.NotEnoughArguments;
             }
+            if (state.mode != ProgramMode.unset) {
+                return ArgParseErr.DualModeAttempted;
+            }
+            state.mode = ProgramMode.diff;
             state.df_one = args[i + 1];
             state.df_two = args[i + 2];
             iter_skip = 2;
         } else if (s_cmp(u8, arg, "serve")) {
-            state.serve_mode = true;
-            // TODO: Get port, if supplied
+            if (state.mode != ProgramMode.unset) {
+                return ArgParseErr.DualModeAttempted;
+            }
+            state.mode = ProgramMode.serve;
+            if (i + 1 == args.len) {
+                return ArgParseErr.NotEnoughArguments;
+            }
+            state.serve_port = std.fmt.parseUnsigned(u16, args[i + 1], 10) catch blk: {
+                std.io.getStdErr().writeAll("[!] Invalid argument.\n\n") catch {};
+                break :blk 5173;
+            };
         }
     }
     // TODO: Check that diff and serve mode are not both active
