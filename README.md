@@ -31,7 +31,8 @@ Then follow the installation instructions found at [zigzap/zap](https://github.c
 Finally, run
 
 ```sh
-zig build run
+# Build, run, and show the help to you.
+zig build run -- -h
 ```
 
 and you now have a development version running on your machine.
@@ -42,4 +43,4 @@ and you now have a development version running on your machine.
 - [ ] Create a web server with
   - [ ] Route to check two files and get the patch
   - [ ] Documentation route?
-- [ ] Command-line args to either start server or run a diff locally
+- [X] Command-line args to either start server or run a diff locally
