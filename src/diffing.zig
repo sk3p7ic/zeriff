@@ -21,7 +21,7 @@ pub const PatchAction = struct {
     line: []const u8,
 
     pub fn to_string(self: PatchAction, alloc: std.mem.Allocator) []u8 {
-        if (std.fmt.allocPrint(alloc, "{d} {s} {s}", .{ self.location, self.action.to_string(), self.line })) |s| {
+        if (std.fmt.allocPrint(alloc, "{d} {s} {s}\n", .{ self.location, self.action.to_string(), self.line })) |s| {
             return s;
         } else |_| {
             return "";

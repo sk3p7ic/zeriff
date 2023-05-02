@@ -6,8 +6,35 @@ const argparse = @import("argparse.zig");
 
 const allocator = std.heap.page_allocator;
 
+fn read_file(fname: []const u8) ![][]const u8 {
+    var file = try std.fs.cwd().openFile(fname, .{});
+    const size_lim = std.math.maxInt(u32);
+    var result = try file.readToEndAlloc(allocator, size_lim);
+    var iter = std.mem.split(u8, result, "\n");
+
+    var lines = std.ArrayList([]const u8).init(allocator);
+    defer lines.deinit();
+
+    while (iter.next()) |line| {
+        try lines.append(line);
+    }
+
+    return lines.toOwnedSlice();
+}
+
 fn diff_files(fname1: []const u8, fname2: []const u8) !u8 {
-    std.debug.print("{s} {s}\n", .{ fname1, fname2 });
+    const f1 = try read_file(fname1);
+    const f2 = try read_file(fname2);
+
+    const patch = try diffing.calculate_distance(allocator, f1, f2);
+    const stdout = std.io.getStdOut();
+    var i: usize = 0;
+    while (i < patch.len): (i += 1) {
+        const formatted_line = patch[i].to_string(allocator);
+        stdout.writeAll(formatted_line) catch {};
+    }
+
+
     return 0;
 }
 
@@ -29,7 +56,6 @@ pub fn main() !void {
         _ = argparse.print_err(err);
         std.os.exit(1);
     }
-    std.debug.print("{}\n", .{arg_state}); // TODO: Remove.
     if (arg_state.mode == argparse.ProgramMode.diff) {
         const status = try diff_files(arg_state.df_one, arg_state.df_two);
         std.os.exit(status);
