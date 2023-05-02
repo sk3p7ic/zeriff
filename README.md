@@ -40,7 +40,9 @@ and you now have a development version running on your machine.
 ## Todo:
 
 - [x] File diffing.
+- [X] Can specify two files and get their diff.
 - [ ] Create a web server with
   - [ ] Route to check two files and get the patch
   - [ ] Documentation route?
 - [X] Command-line args to either start server or run a diff locally
+- [ ] Potentially make diff follow a universal format?
