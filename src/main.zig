@@ -1,8 +1,8 @@
 const std = @import("std");
-const zap = @import("zap");
 
 const diffing = @import("diffing.zig");
 const argparse = @import("argparse.zig");
+const server = @import("server.zig");
 
 const allocator = std.heap.page_allocator;
 
@@ -38,8 +38,9 @@ fn diff_files(fname1: []const u8, fname2: []const u8) !u8 {
     return 0;
 }
 
-fn start_server() !u8 {
-    std.debug.print("Starting server.\n", .{});
+fn start_server(port: u16) !u8 {
+    std.debug.print("Starting server on port {d}.\n", .{ port });
+    try server.start(allocator, port, 2, 2);
     return 0;
 }
 
@@ -60,7 +61,7 @@ pub fn main() !void {
         const status = try diff_files(arg_state.df_one, arg_state.df_two);
         std.os.exit(status);
     } else if (arg_state.mode == argparse.ProgramMode.serve) {
-        const status = try start_server();
+        const status = try start_server(arg_state.serve_port);
         std.os.exit(status);
     }
 }
