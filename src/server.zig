@@ -24,7 +24,6 @@ fn parse_file(contents: []const u8) [][]const u8 {
     }
 
     const lines_arr: [][]const u8 = lines.toOwnedSlice() catch &.{};
-    std.debug.print("{s} -> {s}\n", .{ contents, lines_arr });
     return lines_arr;
 }
 
@@ -33,6 +32,11 @@ fn handle_api_request(r: zap.SimpleRequest) void {
         const InputData = struct {
             file1: []const u8 = "",
             file2: []const u8 = "",
+        };
+
+        const OutputData = struct {
+            ok: bool,
+            patch: []const diffing.SerializablePatchAction,
         };
 
         var stream = std.json.TokenStream.init(b);
@@ -48,15 +52,21 @@ fn handle_api_request(r: zap.SimpleRequest) void {
         const f2 = parse_file(data.file2);
 
         if (diffing.calculate_distance(allocator, f1, f2)) |patch| {
-            var patches = std.ArrayList([]const u8).init(allocator);
+            var patches = std.ArrayList(diffing.SerializablePatchAction).init(allocator);
             defer patches.deinit();
             var i: usize = 0;
             while (i < patch.len): (i += 1) {
-                patches.append(patch[i].to_string(allocator)) catch {};
+                const action = diffing.SerializablePatchAction {
+                    .action = @tagName(patch[i].action),
+                    .location = patch[i].location,
+                    .line = patch[i].line,
+                };
+                patches.append(action) catch {};
             }
+            const output = OutputData { .ok = true, .patch = patches.items };
             var string = std.ArrayList(u8).init(allocator);
             defer string.deinit();
-            std.json.stringify(patches.items, .{}, string.writer()) catch {};
+            std.json.stringify(output, .{}, string.writer()) catch {};
             r.sendJson(string.items) catch return;
             return;
         } else |err| {
@@ -66,7 +76,7 @@ fn handle_api_request(r: zap.SimpleRequest) void {
     }
     std.debug.print("No body recieved.\n", .{});
     r.sendJson(
-        \\{"stat": "bad"}
+        \\{"ok": "false"}
     ) catch return;
 }
 

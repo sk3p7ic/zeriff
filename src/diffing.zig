@@ -29,6 +29,12 @@ pub const PatchAction = struct {
     }
 };
 
+pub const SerializablePatchAction = struct {
+    action: []const u8,
+    location: usize,
+    line: []const u8,
+};
+
 // This algo is from https://github.com/tsoding/piff/blob/master/piff.py (thanks tsoding)
 pub fn calculate_distance(alloc: std.mem.Allocator, s1: [][]const u8, s2: [][]const u8) anyerror![]PatchAction {
     // Get the number of lines for each collection of lines
