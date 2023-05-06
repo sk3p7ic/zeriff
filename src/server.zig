@@ -15,10 +15,11 @@ fn on_request(r: zap.SimpleRequest) void {
 }
 
 fn parse_file(contents: []const u8) [][]const u8 {
+    const terminated_contents: []const u8 = std.fmt.allocPrint(allocator, "{s}\n", .{ contents }) catch contents;
     var lines = std.ArrayList([]const u8).init(allocator);
     defer lines.deinit();
 
-    var iter = std.mem.split(u8, contents, "\n");
+    var iter = std.mem.split(u8, terminated_contents, "\n");
     while (iter.next()) |line| {
         lines.append(line) catch continue;
     }
