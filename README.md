@@ -1,6 +1,6 @@
 # zeriff - file diffing done in zig
 
-<img alt="Zero the Ziguana" src="https://raw.githubusercontent.com/ziglang/logo/master/zero.svg" width="120" align="right" />
+<img alt="Zero the Ziguana" src="https://raw.githubusercontent.com/ziglang/logo/master/zero.svg" width="148" align="right" />
 
 This is a project written in [zig](https://ziglang.org) for file diffing--the process of comparing two files to one another
 and calculating the changes in those files.
@@ -41,8 +41,9 @@ and you now have a development version running on your machine.
 
 - [x] File diffing.
 - [X] Can specify two files and get their diff.
-- [ ] Create a web server with
-  - [ ] Route to check two files and get the patch
+- [X] Create a web server with
+  - [X] Route to check two files and get the patch
   - [ ] Documentation route?
+- [ ] Update tests for web server to follow a more proper format
 - [X] Command-line args to either start server or run a diff locally
 - [ ] Potentially make diff follow a universal format?
